@@ -32,7 +32,7 @@ export function useMetronome() {
     osc.type = 'sine';
 
     envelope.gain.setValueAtTime(0, time);
-    envelope.gain.linearRampToValueAtTime(0.2, time + 0.005); // Faster attack
+    envelope.gain.linearRampToValueAtTime(0.3, time + 0.005); // Increased gain from 0.2 to 0.3 (~3.5dB boost)
     envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.05); // More natural decay
 
     osc.connect(envelope);
