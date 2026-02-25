@@ -55,6 +55,7 @@ export default function App() {
   const [presetToAddToSetlist, setPresetToAddToSetlist] = useState<Preset | null>(null);
   const [confirmDeletePresetId, setConfirmDeletePresetId] = useState<string | null>(null);
   const [confirmDeleteSetlistId, setConfirmDeleteSetlistId] = useState<string | null>(null);
+  const [isEditingSetlist, setIsEditingSetlist] = useState(false);
 
   // Save to LocalStorage whenever data changes
   useEffect(() => {
@@ -204,7 +205,7 @@ export default function App() {
         {/* Header / Navigation */}
         <div className="flex border-bottom border-[#2a2a2a] p-2 bg-[#1a1b1e]">
           <button 
-            onClick={() => setView('metronome')}
+            onClick={() => { setView('metronome'); setIsEditingSetlist(false); }}
             className={cn(
               "flex-1 py-3 flex flex-col items-center gap-1 transition-colors",
               view === 'metronome' ? "text-[#f27d26]" : "text-[#8e9299] hover:text-white"
@@ -214,7 +215,7 @@ export default function App() {
             <span className="mono-label">Tempo</span>
           </button>
           <button 
-            onClick={() => setView('presets')}
+            onClick={() => { setView('presets'); setIsEditingSetlist(false); }}
             className={cn(
               "flex-1 py-3 flex flex-col items-center gap-1 transition-colors",
               view === 'presets' ? "text-[#f27d26]" : "text-[#8e9299] hover:text-white"
@@ -224,7 +225,7 @@ export default function App() {
             <span className="mono-label">Presets</span>
           </button>
           <button 
-            onClick={() => setView('setlists')}
+            onClick={() => { setView('setlists'); setIsEditingSetlist(false); }}
             className={cn(
               "flex-1 py-3 flex flex-col items-center gap-1 transition-colors",
               view === 'setlists' ? "text-[#f27d26]" : "text-[#8e9299] hover:text-white"
@@ -657,7 +658,7 @@ export default function App() {
                   <div className="flex flex-col h-full">
                     <div className="flex items-center gap-2 mb-6">
                       <button 
-                        onClick={() => setView('setlists')}
+                        onClick={() => { setView('setlists'); setIsEditingSetlist(false); }}
                         className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-[#8e9299]"
                       >
                         <ChevronLeft size={20} />
@@ -665,6 +666,16 @@ export default function App() {
                       <h2 className="text-xl font-bold truncate flex-1">
                         {selectedSetlist?.name}
                       </h2>
+                      <button 
+                        onClick={() => setIsEditingSetlist(!isEditingSetlist)}
+                        className={cn(
+                          "p-2 rounded-lg transition-colors",
+                          isEditingSetlist ? "text-[#f27d26] bg-[#2a2a2a]" : "text-[#8e9299] hover:bg-[#2a2a2a]"
+                        )}
+                        title={isEditingSetlist ? "Done editing" : "Edit setlist"}
+                      >
+                        <Edit2 size={18} />
+                      </button>
                       <button 
                         onClick={() => setView('presets')}
                         className="p-2 text-[#f27d26] hover:bg-[#2a2a2a] rounded-lg transition-colors"
@@ -693,35 +704,46 @@ export default function App() {
                                   : "border-[#2a2a2a]"
                               )}
                             >
-                              <GripVertical size={16} className="text-[#2a2a2a] group-hover:text-[#8e9299] cursor-grab shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium truncate">{p.name}</div>
-                                <div className="mono-label text-[8px]">{p.bpm} BPM</div>
-                              </div>
                               <div className="flex gap-1">
-                                <button 
-                                  onClick={() => playPresetFromSetlist(selectedSetlist.id, idx)}
-                                  className={cn(
-                                    "p-2 rounded-lg transition-colors",
-                                    activeSetlistId === selectedSetlist.id && activePresetIndex === idx && isPlaying
-                                      ? "text-[#f27d26] bg-[#2a2a2a]"
-                                      : "text-[#8e9299] hover:text-[#f27d26] hover:bg-[#2a2a2a]"
-                                  )}
-                                >
-                                  {activeSetlistId === selectedSetlist.id && activePresetIndex === idx && isPlaying 
-                                    ? <Square size={18} fill="currentColor" /> 
-                                    : <Play size={18} fill="currentColor" />}
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    const newPresets = [...selectedSetlist.presets];
-                                    newPresets.splice(idx, 1);
-                                    reorderPresets(selectedSetlist.id, newPresets);
-                                  }}
-                                  className="p-2 text-[#8e9299] hover:text-red-500 transition-colors"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
+                                {isEditingSetlist ? (
+                                  <>
+                                    <GripVertical size={16} className="text-[#2a2a2a] group-hover:text-[#8e9299] cursor-grab shrink-0 self-center mr-2" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium truncate">{p.name}</div>
+                                      <div className="mono-label text-[8px]">{p.bpm} BPM</div>
+                                    </div>
+                                    <button 
+                                      onClick={() => {
+                                        const newPresets = [...selectedSetlist.presets];
+                                        newPresets.splice(idx, 1);
+                                        reorderPresets(selectedSetlist.id, newPresets);
+                                      }}
+                                      className="p-2 text-red-500/50 hover:text-red-500 transition-colors"
+                                    >
+                                      <Trash2 size={18} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium truncate">{p.name}</div>
+                                      <div className="mono-label text-[8px]">{p.bpm} BPM</div>
+                                    </div>
+                                    <button 
+                                      onClick={() => playPresetFromSetlist(selectedSetlist.id, idx)}
+                                      className={cn(
+                                        "p-2 rounded-lg transition-colors",
+                                        activeSetlistId === selectedSetlist.id && activePresetIndex === idx && isPlaying
+                                          ? "text-[#f27d26] bg-[#2a2a2a]"
+                                          : "text-[#8e9299] hover:text-[#f27d26] hover:bg-[#2a2a2a]"
+                                      )}
+                                    >
+                                      {activeSetlistId === selectedSetlist.id && activePresetIndex === idx && isPlaying 
+                                        ? <Square size={18} fill="currentColor" /> 
+                                        : <Play size={18} fill="currentColor" />}
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </Reorder.Item>
                           ))}
