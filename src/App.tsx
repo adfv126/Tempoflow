@@ -704,10 +704,10 @@ export default function App() {
                                   : "border-[#2a2a2a]"
                               )}
                             >
-                              <div className="flex gap-1">
+                              <div className="flex-1 flex items-center">
                                 {isEditingSetlist ? (
                                   <>
-                                    <GripVertical size={16} className="text-[#2a2a2a] group-hover:text-[#8e9299] cursor-grab shrink-0 self-center mr-2" />
+                                    <GripVertical size={16} className="text-[#2a2a2a] group-hover:text-[#8e9299] cursor-grab shrink-0 self-center mr-4" />
                                     <div className="flex-1 min-w-0">
                                       <div className="font-medium truncate">{p.name}</div>
                                       <div className="mono-label text-[8px]">{p.bpm} BPM</div>
@@ -718,9 +718,9 @@ export default function App() {
                                         newPresets.splice(idx, 1);
                                         reorderPresets(selectedSetlist.id, newPresets);
                                       }}
-                                      className="p-2 text-red-500/50 hover:text-red-500 transition-colors"
+                                      className="p-2 ml-2 text-red-500/50 hover:text-red-500 transition-colors"
                                     >
-                                      <Trash2 size={18} />
+                                      <Trash2 size={20} />
                                     </button>
                                   </>
                                 ) : (
@@ -732,15 +732,15 @@ export default function App() {
                                     <button 
                                       onClick={() => playPresetFromSetlist(selectedSetlist.id, idx)}
                                       className={cn(
-                                        "p-2 rounded-lg transition-colors",
+                                        "p-2 ml-4 rounded-lg transition-colors",
                                         activeSetlistId === selectedSetlist.id && activePresetIndex === idx && isPlaying
                                           ? "text-[#f27d26] bg-[#2a2a2a]"
                                           : "text-[#8e9299] hover:text-[#f27d26] hover:bg-[#2a2a2a]"
                                       )}
                                     >
                                       {activeSetlistId === selectedSetlist.id && activePresetIndex === idx && isPlaying 
-                                        ? <Square size={18} fill="currentColor" /> 
-                                        : <Play size={18} fill="currentColor" />}
+                                        ? <Square size={22} fill="currentColor" /> 
+                                        : <Play size={22} fill="currentColor" />}
                                     </button>
                                   </>
                                 )}
