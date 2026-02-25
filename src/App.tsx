@@ -703,6 +703,7 @@ export default function App() {
                                   ? "border-[#f27d26] bg-[#1f1a16]"
                                   : "border-[#2a2a2a]"
                               )}
+                              dragListener={isEditingSetlist}
                             >
                               <div className="flex-1 flex items-center">
                                 {isEditingSetlist ? (
