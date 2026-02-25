@@ -35,7 +35,7 @@ export function useMetronome() {
     osc.type = 'sine';
 
     envelope.gain.setValueAtTime(0, time);
-    envelope.gain.linearRampToValueAtTime(0.5, time + 0.005); // Increased to 0.5 for more volume
+    envelope.gain.linearRampToValueAtTime(0.8, time + 0.005); // Increased to 0.8 for maximum volume
     envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.05); // More natural decay
 
     osc.connect(envelope);
