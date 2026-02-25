@@ -29,8 +29,18 @@ function cn(...inputs: ClassValue[]) {
 
 export default function App() {
   const { bpm, setBpm, isPlaying, toggleMetronome, beat } = useMetronome();
-  const [presets, setPresets] = useState<Preset[]>([]);
-  const [setlists, setSetlists] = useState<Setlist[]>([]);
+  const [presets, setPresets] = useState<Preset[]>(() => {
+    const saved = localStorage.getItem('tempoflow_presets');
+    if (saved) return JSON.parse(saved);
+    return [{"id":"40789e83-8449-44cf-9c38-01dead5f1682","name":"xd","bpm":120},{"id":"8e450dfc-cb8c-4e11-829c-68593da730ed","name":"xd","bpm":120}];
+  });
+
+  const [setlists, setSetlists] = useState<Setlist[]>(() => {
+    const saved = localStorage.getItem('tempoflow_setlists');
+    if (saved) return JSON.parse(saved);
+    return [{"id":"8cf2572d-0c48-481a-b8df-1505361b3f53","name":"juice","presets":[{"id":"8e450dfc-cb8c-4e11-829c-68593da730ed","name":"xd","bpm":120}]}];
+  });
+
   const [activeSetlistId, setActiveSetlistId] = useState<string | null>(null);
   const [activePresetIndex, setActivePresetIndex] = useState(0);
   const [view, setView] = useState<'metronome' | 'presets' | 'setlists' | 'setlist-detail'>('metronome');
@@ -46,23 +56,11 @@ export default function App() {
   const [confirmDeletePresetId, setConfirmDeletePresetId] = useState<string | null>(null);
   const [confirmDeleteSetlistId, setConfirmDeleteSetlistId] = useState<string | null>(null);
 
-  // Load data from LocalStorage
-  useEffect(() => {
-    const savedPresets = localStorage.getItem('tempoflow_presets');
-    const savedSetlists = localStorage.getItem('tempoflow_setlists');
-    
-    if (savedPresets) setPresets(JSON.parse(savedPresets));
-    if (savedSetlists) setSetlists(JSON.parse(savedSetlists));
-  }, []);
-
   // Save to LocalStorage whenever data changes
   useEffect(() => {
     localStorage.setItem('tempoflow_presets', JSON.stringify(presets));
-  }, [presets]);
-
-  useEffect(() => {
     localStorage.setItem('tempoflow_setlists', JSON.stringify(setlists));
-  }, [setlists]);
+  }, [presets, setlists]);
 
   const addPreset = () => {
     if (!newPresetName.trim()) return;
