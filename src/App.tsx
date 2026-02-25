@@ -46,24 +46,25 @@ export default function App() {
   const [confirmDeletePresetId, setConfirmDeletePresetId] = useState<string | null>(null);
   const [confirmDeleteSetlistId, setConfirmDeleteSetlistId] = useState<string | null>(null);
 
-  // Load data from API
+  // Load data from LocalStorage
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [presetsRes, setlistsRes] = await Promise.all([
-          fetch('/api/presets'),
-          fetch('/api/setlists')
-        ]);
-        if (presetsRes.ok) setPresets(await presetsRes.json());
-        if (setlistsRes.ok) setSetlists(await setlistsRes.json());
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
-    fetchData();
+    const savedPresets = localStorage.getItem('tempoflow_presets');
+    const savedSetlists = localStorage.getItem('tempoflow_setlists');
+    
+    if (savedPresets) setPresets(JSON.parse(savedPresets));
+    if (savedSetlists) setSetlists(JSON.parse(savedSetlists));
   }, []);
 
-  const addPreset = async () => {
+  // Save to LocalStorage whenever data changes
+  useEffect(() => {
+    localStorage.setItem('tempoflow_presets', JSON.stringify(presets));
+  }, [presets]);
+
+  useEffect(() => {
+    localStorage.setItem('tempoflow_setlists', JSON.stringify(setlists));
+  }, [setlists]);
+
+  const addPreset = () => {
     if (!newPresetName.trim()) return;
     const newPreset: Preset = {
       id: crypto.randomUUID(),
@@ -71,31 +72,17 @@ export default function App() {
       bpm: bpm
     };
     
-    try {
-      await fetch('/api/presets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPreset)
-      });
-      setPresets([...presets, newPreset]);
-      setNewPresetName('');
-    } catch (error) {
-      console.error('Failed to add preset:', error);
-    }
+    setPresets([...presets, newPreset]);
+    setNewPresetName('');
   };
 
-  const deletePreset = async (id: string) => {
-    try {
-      await fetch(`/api/presets/${id}`, { method: 'DELETE' });
-      setPresets(presets.filter(p => p.id !== id));
-      // Also remove from setlists locally
-      setSetlists(setlists.map(s => ({
-        ...s,
-        presets: s.presets.filter(p => p.id !== id)
-      })));
-    } catch (error) {
-      console.error('Failed to delete preset:', error);
-    }
+  const deletePreset = (id: string) => {
+    setPresets(presets.filter(p => p.id !== id));
+    // Also remove from setlists locally
+    setSetlists(setlists.map(s => ({
+      ...s,
+      presets: s.presets.filter(p => p.id !== id)
+    })));
   };
 
   const startEditingPreset = (preset: Preset) => {
@@ -104,37 +91,27 @@ export default function App() {
     setEditingPresetBpm(preset.bpm);
   };
 
-  const saveEditedPreset = async () => {
+  const saveEditedPreset = () => {
     if (!editingPresetId || !editingPresetName.trim()) return;
     
     const updatedPreset = { id: editingPresetId, name: editingPresetName, bpm: editingPresetBpm };
     
-    try {
-      await fetch('/api/presets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedPreset)
-      });
+    setPresets(presets.map(p => 
+      p.id === editingPresetId ? updatedPreset : p
+    ));
 
-      setPresets(presets.map(p => 
+    // Also update in setlists
+    setSetlists(setlists.map(s => ({
+      ...s,
+      presets: s.presets.map(p => 
         p.id === editingPresetId ? updatedPreset : p
-      ));
+      )
+    })));
 
-      // Also update in setlists
-      setSetlists(setlists.map(s => ({
-        ...s,
-        presets: s.presets.map(p => 
-          p.id === editingPresetId ? updatedPreset : p
-        )
-      })));
-
-      setEditingPresetId(null);
-    } catch (error) {
-      console.error('Failed to save preset:', error);
-    }
+    setEditingPresetId(null);
   };
 
-  const createSetlist = async () => {
+  const createSetlist = () => {
     if (!newSetlistName.trim()) return;
     const newSetlist: Setlist = {
       id: crypto.randomUUID(),
@@ -142,33 +119,19 @@ export default function App() {
       presets: []
     };
     
-    try {
-      await fetch('/api/setlists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSetlist)
-      });
-      setSetlists([...setlists, newSetlist]);
-      setNewSetlistName('');
-    } catch (error) {
-      console.error('Failed to create setlist:', error);
+    setSetlists([...setlists, newSetlist]);
+    setNewSetlistName('');
+  };
+
+  const deleteSetlist = (id: string) => {
+    setSetlists(setlists.filter(s => s.id !== id));
+    if (activeSetlistId === id) {
+      setActiveSetlistId(null);
+      setActivePresetIndex(0);
     }
   };
 
-  const deleteSetlist = async (id: string) => {
-    try {
-      await fetch(`/api/setlists/${id}`, { method: 'DELETE' });
-      setSetlists(setlists.filter(s => s.id !== id));
-      if (activeSetlistId === id) {
-        setActiveSetlistId(null);
-        setActivePresetIndex(0);
-      }
-    } catch (error) {
-      console.error('Failed to delete setlist:', error);
-    }
-  };
-
-  const addPresetToSetlist = async (setlistId: string, preset: Preset) => {
+  const addPresetToSetlist = (setlistId: string, preset: Preset) => {
     const setlist = setlists.find(s => s.id === setlistId);
     if (!setlist) return;
 
@@ -177,37 +140,18 @@ export default function App() {
       presets: [...setlist.presets, { ...preset, id: crypto.randomUUID() }] 
     };
 
-    try {
-      await fetch('/api/setlists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedSetlist)
-      });
-      setSetlists(setlists.map(s => s.id === setlistId ? updatedSetlist : s));
-    } catch (error) {
-      console.error('Failed to add preset to setlist:', error);
-    }
+    setSetlists(setlists.map(s => s.id === setlistId ? updatedSetlist : s));
   };
 
-  const reorderPresets = async (setlistId: string, newPresets: Preset[]) => {
+  const reorderPresets = (setlistId: string, newPresets: Preset[]) => {
     const setlist = setlists.find(s => s.id === setlistId);
     if (!setlist) return;
 
     const updatedSetlist = { ...setlist, presets: newPresets };
-
-    try {
-      await fetch('/api/setlists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedSetlist)
-      });
-      setSetlists(setlists.map(s => s.id === setlistId ? updatedSetlist : s));
-    } catch (error) {
-      console.error('Failed to reorder presets:', error);
-    }
+    setSetlists(setlists.map(s => s.id === setlistId ? updatedSetlist : s));
   };
 
-  const handleSaveCurrentAsPreset = async () => {
+  const handleSaveCurrentAsPreset = () => {
     if (!savePresetName.trim()) return;
     const newPreset: Preset = {
       id: crypto.randomUUID(),
@@ -215,18 +159,9 @@ export default function App() {
       bpm: bpm
     };
     
-    try {
-      await fetch('/api/presets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPreset)
-      });
-      setPresets([...presets, newPreset]);
-      setSavePresetName('');
-      setIsSavingPreset(false);
-    } catch (error) {
-      console.error('Failed to save current as preset:', error);
-    }
+    setPresets([...presets, newPreset]);
+    setSavePresetName('');
+    setIsSavingPreset(false);
   };
 
   const activeSetlist = setlists.find(s => s.id === activeSetlistId);
