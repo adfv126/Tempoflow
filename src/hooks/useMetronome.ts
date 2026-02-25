@@ -6,9 +6,12 @@ export function useMetronome() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [beat, setBeat] = useState(0);
 
-  const setBpm = useCallback((newBpm: number) => {
-    setBpmState(newBpm);
-    bpmRef.current = newBpm;
+  const setBpm = useCallback((newBpm: number | ((prev: number) => number)) => {
+    setBpmState(prev => {
+      const next = typeof newBpm === 'function' ? newBpm(prev) : newBpm;
+      bpmRef.current = next;
+      return next;
+    });
   }, []);
 
   const audioContext = useRef<AudioContext | null>(null);
@@ -32,7 +35,7 @@ export function useMetronome() {
     osc.type = 'sine';
 
     envelope.gain.setValueAtTime(0, time);
-    envelope.gain.linearRampToValueAtTime(0.3, time + 0.005); // Increased gain from 0.2 to 0.3 (~3.5dB boost)
+    envelope.gain.linearRampToValueAtTime(0.5, time + 0.005); // Increased to 0.5 for more volume
     envelope.gain.exponentialRampToValueAtTime(0.001, time + 0.05); // More natural decay
 
     osc.connect(envelope);
